@@ -10,6 +10,7 @@ from .bls import BLSClient
 from .housing import HousingDataClient
 from .walkscore import WalkScoreClient
 from .fema_nri import FEMANRIClient
+from .fbi_crime import FBICrimeClient
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,12 @@ class CityDataProfile:
     risk_score: float | None = None
     hazard_scores: dict[str, str] = field(default_factory=dict)
 
+    # Crime/FBI
+    violent_crime_rate: float | None = None
+    violent_crime_trend: float | None = None
+    homicide_count: int | None = None
+    homicide_trend_pct: float | None = None
+
 
 class CityDataAggregator:
     """Aggregates data from all sources into a unified CityDataProfile."""
@@ -64,6 +71,7 @@ class CityDataAggregator:
         housing_client: HousingDataClient | None = None,
         walkscore_client: WalkScoreClient | None = None,
         fema_client: FEMANRIClient | None = None,
+        fbi_client: FBICrimeClient | None = None,
         db_path: str | None = None,
     ):
         self.resolver = resolver or FIPSResolver()
@@ -72,6 +80,7 @@ class CityDataAggregator:
         self.housing_client = housing_client or HousingDataClient()
         self.walkscore_client = walkscore_client or WalkScoreClient()
         self.fema_client = fema_client or FEMANRIClient()
+        self.fbi_client = fbi_client
 
         engine = get_engine(db_path)
         init_db(engine)
@@ -109,6 +118,9 @@ class CityDataAggregator:
 
         # FEMA NRI
         self._fetch_fema(profile, resolved)
+
+        # FBI Crime
+        self._fetch_crime(profile, resolved)
 
         return profile
 
@@ -170,3 +182,16 @@ class CityDataAggregator:
             profile.hazard_scores = result.get("hazard_scores", {})
         except Exception as e:
             logger.error("FEMA NRI fetch failed: %s", e)
+
+    def _fetch_crime(self, profile: CityDataProfile, resolved: dict) -> None:
+        """Populate FBI crime data fields on the profile."""
+        if self.fbi_client is None:
+            return
+        try:
+            result = self.fbi_client.fetch_and_store(self._session, resolved)
+            profile.violent_crime_rate = result.get("violent_crime_rate")
+            profile.violent_crime_trend = result.get("violent_crime_trend")
+            profile.homicide_count = result.get("homicide_count")
+            profile.homicide_trend_pct = result.get("homicide_trend_pct")
+        except Exception as e:
+            logger.error("FBI crime data fetch failed: %s", e)

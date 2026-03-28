@@ -15,7 +15,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 # Re-export for convenience
 __all__ = [
     "Base", "City", "AcsData", "BLSData", "HousingData",
-    "WalkScoreData", "ClimateRiskData",
+    "WalkScoreData", "ClimateRiskData", "CrimeData",
 ]
 
 
@@ -37,6 +37,7 @@ class City(Base):
     housing_data: Mapped[list["HousingData"]] = relationship(back_populates="city", cascade="all, delete-orphan")
     walkscore_data: Mapped[list["WalkScoreData"]] = relationship(back_populates="city", cascade="all, delete-orphan")
     climate_risk_data: Mapped[list["ClimateRiskData"]] = relationship(back_populates="city", cascade="all, delete-orphan")
+    crime_data: Mapped[list["CrimeData"]] = relationship(back_populates="city", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("state_fips", "place_fips", name="uq_city_fips"),
@@ -164,3 +165,27 @@ class ClimateRiskData(Base):
 
     def __repr__(self) -> str:
         return f"<ClimateRiskData(city_id={self.city_id}, rating='{self.risk_rating}')>"
+
+
+class CrimeData(Base):
+    __tablename__ = "crime_data"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    city_id: Mapped[int] = mapped_column(Integer, ForeignKey("cities.id"), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    violent_crime_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    homicide_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    population: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    data_source: Mapped[str] = mapped_column(String(20), nullable=False)  # "fbi_api" or "state_fallback"
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    city: Mapped["City"] = relationship(back_populates="crime_data")
+
+    __table_args__ = (
+        UniqueConstraint("city_id", "year", "data_source", name="uq_crime_record"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<CrimeData(city_id={self.city_id}, year={self.year}, violent_rate={self.violent_crime_rate})>"

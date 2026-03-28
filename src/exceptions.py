@@ -31,3 +31,7 @@ class WalkScoreError(MunicipalGrowthError):
 
 class FEMADataError(MunicipalGrowthError):
     """Raised when FEMA NRI CSV parsing fails."""
+
+
+class FBICrimeError(MunicipalGrowthError):
+    """Raised when the FBI Crime Data API returns an error or unexpected response."""

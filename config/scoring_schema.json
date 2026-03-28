@@ -1,0 +1,303 @@
+{
+  "dimensions": {
+    "population_demographics": {
+      "label": "Population & Demographics",
+      "weight": 1,
+      "indicators": {
+        "poverty_rate": {
+          "source_field": "poverty_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 10, "score": 2},
+            {"min": 10, "max": 13, "score": 1},
+            {"min": 13, "max": 16, "score": 0},
+            {"min": 16, "max": 22, "score": -1},
+            {"min": 22, "score": -2}
+          ]
+        },
+        "median_income_ratio": {
+          "source_field": "median_income",
+          "type": "ratio",
+          "national_benchmark": 80610,
+          "thresholds": [
+            {"min_ratio": 1.10, "score": 2},
+            {"min_ratio": 0.95, "max_ratio": 1.10, "score": 1},
+            {"min_ratio": 0.80, "max_ratio": 0.95, "score": 0},
+            {"min_ratio": 0.60, "max_ratio": 0.80, "score": -1},
+            {"max_ratio": 0.60, "score": -2}
+          ]
+        },
+        "bachelors_pct": {
+          "source_field": "bachelors_plus_pct",
+          "direction": "higher_is_better",
+          "thresholds": [
+            {"min": 40, "score": 2},
+            {"min": 33, "max": 40, "score": 1},
+            {"min": 25, "max": 33, "score": 0},
+            {"min": 18, "max": 25, "score": -1},
+            {"max": 18, "score": -2}
+          ]
+        }
+      }
+    },
+    "housing_market": {
+      "label": "Housing Market",
+      "weight": 1,
+      "indicators": {
+        "price_yoy": {
+          "source_field": "price_yoy_change",
+          "fallback_field": "zhvi_yoy_change",
+          "direction": "higher_is_better",
+          "thresholds": [
+            {"min": 8, "score": 2},
+            {"min": 3, "max": 8, "score": 1},
+            {"min": 0, "max": 3, "score": 0},
+            {"min": -5, "max": 0, "score": -1},
+            {"max": -5, "score": -2}
+          ]
+        }
+      }
+    },
+    "economic_base": {
+      "label": "Economic Base",
+      "weight": 1,
+      "indicators": {
+        "unemployment_rate": {
+          "source_field": "unemployment_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 3.5, "score": 2},
+            {"min": 3.5, "max": 4.5, "score": 1},
+            {"min": 4.5, "max": 6, "score": 0},
+            {"min": 6, "max": 8, "score": -1},
+            {"min": 8, "score": -2}
+          ]
+        },
+        "unemployment_trend": {
+          "source_field": "unemployment_trend",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": -1.0, "score": 2},
+            {"min": -1.0, "max": -0.3, "score": 1},
+            {"min": -0.3, "max": 0.3, "score": 0},
+            {"min": 0.3, "max": 1.0, "score": -1},
+            {"min": 1.0, "score": -2}
+          ]
+        }
+      }
+    },
+    "fiscal_health": {
+      "label": "Fiscal Health",
+      "weight": 1,
+      "requires_manual": true,
+      "indicators": {
+        "poverty_rate_proxy": {
+          "source_field": "poverty_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 10, "score": 2},
+            {"min": 10, "max": 14, "score": 1},
+            {"min": 14, "max": 18, "score": 0},
+            {"min": 18, "max": 25, "score": -1},
+            {"min": 25, "score": -2}
+          ]
+        },
+        "unemployment_proxy": {
+          "source_field": "unemployment_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 3.5, "score": 2},
+            {"min": 3.5, "max": 5, "score": 1},
+            {"min": 5, "max": 6.5, "score": 0},
+            {"min": 6.5, "max": 8.5, "score": -1},
+            {"min": 8.5, "score": -2}
+          ]
+        }
+      }
+    },
+    "infrastructure": {
+      "label": "Infrastructure & Capital Investment",
+      "weight": 1,
+      "indicators": {
+        "walk_score": {
+          "source_field": "walk_score",
+          "direction": "higher_is_better",
+          "thresholds": [
+            {"min": 80, "score": 2},
+            {"min": 70, "max": 80, "score": 1},
+            {"min": 50, "max": 70, "score": 0},
+            {"min": 30, "max": 50, "score": -1},
+            {"max": 30, "score": -2}
+          ]
+        },
+        "transit_score": {
+          "source_field": "transit_score",
+          "direction": "higher_is_better",
+          "thresholds": [
+            {"min": 70, "score": 2},
+            {"min": 50, "max": 70, "score": 1},
+            {"min": 30, "max": 50, "score": 0},
+            {"min": 15, "max": 30, "score": -1},
+            {"max": 15, "score": -2}
+          ]
+        }
+      }
+    },
+    "education": {
+      "label": "Education",
+      "weight": 1,
+      "indicators": {
+        "bachelors_vs_national": {
+          "source_field": "bachelors_plus_pct",
+          "type": "deviation",
+          "national_benchmark": 33.7,
+          "thresholds": [
+            {"min_dev": 5, "score": 2},
+            {"min_dev": 0, "max_dev": 5, "score": 1},
+            {"min_dev": -5, "max_dev": 0, "score": 0},
+            {"min_dev": -15, "max_dev": -5, "score": -1},
+            {"max_dev": -15, "score": -2}
+          ]
+        }
+      }
+    },
+    "public_safety": {
+      "label": "Public Safety",
+      "weight": 1,
+      "indicators": {
+        "violent_crime_rate": {
+          "source_field": "violent_crime_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 200, "score": 2},
+            {"min": 200, "max": 380, "score": 1},
+            {"min": 380, "max": 500, "score": 0},
+            {"min": 500, "max": 700, "score": -1},
+            {"min": 700, "score": -2}
+          ]
+        },
+        "homicide_trend_pct": {
+          "source_field": "homicide_trend_pct",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": -15, "score": 2},
+            {"min": -15, "max": -3, "score": 1},
+            {"min": -3, "max": 3, "score": 0},
+            {"min": 3, "max": 15, "score": -1},
+            {"min": 15, "score": -2}
+          ]
+        }
+      }
+    },
+    "climate_environment": {
+      "label": "Climate & Environmental Risk",
+      "weight": 1,
+      "indicators": {
+        "overall_risk": {
+          "source_field": "risk_rating",
+          "type": "categorical",
+          "categories": {
+            "Very Low": 2,
+            "Relatively Low": 1,
+            "Relatively Moderate": 0,
+            "Relatively High": -1,
+            "Very High": -2
+          }
+        },
+        "tornado_risk": {
+          "source_field": "hazard_scores.tornado",
+          "type": "categorical",
+          "categories": {
+            "Very Low": 2,
+            "Relatively Low": 1,
+            "Relatively Moderate": 0,
+            "Relatively High": -1,
+            "Very High": -2
+          }
+        },
+        "hurricane_risk": {
+          "source_field": "hazard_scores.hurricane",
+          "type": "categorical",
+          "categories": {
+            "Very Low": 2,
+            "Relatively Low": 1,
+            "Relatively Moderate": 0,
+            "Relatively High": -1,
+            "Very High": -2
+          }
+        },
+        "flood_risk": {
+          "source_field": "hazard_scores.flood",
+          "type": "categorical",
+          "categories": {
+            "Very Low": 2,
+            "Relatively Low": 1,
+            "Relatively Moderate": 0,
+            "Relatively High": -1,
+            "Very High": -2
+          }
+        },
+        "heat_wave_risk": {
+          "source_field": "hazard_scores.heat_wave",
+          "type": "categorical",
+          "categories": {
+            "Very Low": 2,
+            "Relatively Low": 1,
+            "Relatively Moderate": 0,
+            "Relatively High": -1,
+            "Very High": -2
+          }
+        }
+      }
+    },
+    "quality_of_life": {
+      "label": "Quality of Life",
+      "weight": 1,
+      "indicators": {
+        "walk_score": {
+          "source_field": "walk_score",
+          "direction": "higher_is_better",
+          "thresholds": [
+            {"min": 80, "score": 2},
+            {"min": 70, "max": 80, "score": 1},
+            {"min": 50, "max": 70, "score": 0},
+            {"min": 30, "max": 50, "score": -1},
+            {"max": 30, "score": -2}
+          ]
+        },
+        "poverty_rate": {
+          "source_field": "poverty_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 10, "score": 2},
+            {"min": 10, "max": 13, "score": 1},
+            {"min": 13, "max": 16, "score": 0},
+            {"min": 16, "max": 22, "score": -1},
+            {"min": 22, "score": -2}
+          ]
+        },
+        "unemployment_rate": {
+          "source_field": "unemployment_rate",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 3.5, "score": 2},
+            {"min": 3.5, "max": 4.5, "score": 1},
+            {"min": 4.5, "max": 6, "score": 0},
+            {"min": 6, "max": 8, "score": -1},
+            {"min": 8, "score": -2}
+          ]
+        }
+      }
+    }
+  },
+  "composite": {
+    "range": [-18, 18],
+    "bands": [
+      {"max": -9, "label": "Severe Decline"},
+      {"min": -8, "max": -4, "label": "Declining"},
+      {"min": -3, "max": 3, "label": "Stable"},
+      {"min": 4, "max": 8, "label": "Growing"},
+      {"min": 9, "label": "Rapid Growth"}
+    ]
+  }
+}

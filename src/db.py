@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from .models import AcsData, BLSData, Base, City, ClimateRiskData, HousingData, WalkScoreData
+from .models import AcsData, BLSData, Base, City, ClimateRiskData, CrimeData, HousingData, WalkScoreData
 
 logger = logging.getLogger(__name__)
 
@@ -269,3 +269,50 @@ def get_climate_risk_data(session: Session, city_id: int) -> ClimateRiskData | N
     """Query stored climate risk data for a city."""
     stmt = select(ClimateRiskData).where(ClimateRiskData.city_id == city_id)
     return session.execute(stmt).scalar_one_or_none()
+
+
+# ── Crime Data helpers ───────────────────────────────────────────────────────
+
+def upsert_crime_data(
+    session: Session,
+    city_id: int,
+    year: int,
+    violent_crime_rate: float | None,
+    homicide_count: int | None,
+    population: int | None,
+    data_source: str,
+) -> CrimeData:
+    """Insert or update crime data for a city/year."""
+    stmt = select(CrimeData).where(
+        CrimeData.city_id == city_id,
+        CrimeData.year == year,
+        CrimeData.data_source == data_source,
+    )
+    record = session.execute(stmt).scalar_one_or_none()
+    if record is None:
+        record = CrimeData(
+            city_id=city_id, year=year,
+            violent_crime_rate=violent_crime_rate,
+            homicide_count=homicide_count,
+            population=population,
+            data_source=data_source,
+            fetched_at=datetime.now(timezone.utc),
+        )
+        session.add(record)
+    else:
+        record.violent_crime_rate = violent_crime_rate
+        record.homicide_count = homicide_count
+        record.population = population
+        record.fetched_at = datetime.now(timezone.utc)
+    session.flush()
+    return record
+
+
+def get_crime_data(
+    session: Session, city_id: int, year: int | None = None,
+) -> list[CrimeData]:
+    """Query stored crime data for a city."""
+    stmt = select(CrimeData).where(CrimeData.city_id == city_id)
+    if year:
+        stmt = stmt.where(CrimeData.year == year)
+    return list(session.execute(stmt).scalars().all())
