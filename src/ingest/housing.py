@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -227,10 +228,11 @@ class HousingDataClient:
         self,
         session,
         resolver_result: dict,
+        max_age_days: int = 90,
     ) -> dict:
         """Parse both Redfin and Zillow data and persist to database.
 
-        Checks cache first.
+        Checks cache first; re-parses if data is stale.
         """
         city = upsert_city(session, resolver_result)
         city_name = resolver_result["city_name"]
@@ -239,11 +241,15 @@ class HousingDataClient:
         # Check cache
         existing = get_housing_data(session, city.id)
         if existing:
-            logger.info("Housing data cached for city_id=%d", city.id)
-            result = {}
-            for rec in existing:
-                result[f"{rec.source}_{rec.metric_name}"] = rec.metric_value
-            return result
+            newest = max(existing, key=lambda r: r.fetched_at)
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - newest.fetched_at).days
+            if age <= max_age_days:
+                logger.info("Housing data cached for city_id=%d (age: %dd)", city.id, age)
+                result = {}
+                for rec in existing:
+                    result[f"{rec.source}_{rec.metric_name}"] = rec.metric_value
+                return result
+            logger.info("Housing cache stale (%d days), re-parsing", age)
 
         combined = {}
 

@@ -27,15 +27,15 @@
             {"max_ratio": 0.60, "score": -2}
           ]
         },
-        "bachelors_pct": {
-          "source_field": "bachelors_plus_pct",
+        "population_growth": {
+          "source_field": "population_growth_rate",
           "direction": "higher_is_better",
           "thresholds": [
-            {"min": 40, "score": 2},
-            {"min": 33, "max": 40, "score": 1},
-            {"min": 25, "max": 33, "score": 0},
-            {"min": 18, "max": 25, "score": -1},
-            {"max": 18, "score": -2}
+            {"min": 1.0, "score": 2},
+            {"min": 0.3, "max": 1.0, "score": 1},
+            {"min": -0.3, "max": 0.3, "score": 0},
+            {"min": -1.0, "max": -0.3, "score": -1},
+            {"max": -1.0, "score": -2}
           ]
         }
       }
@@ -54,6 +54,17 @@
             {"min": 0, "max": 3, "score": 0},
             {"min": -5, "max": 0, "score": -1},
             {"max": -5, "score": -2}
+          ]
+        },
+        "price_to_income": {
+          "source_field": "price_to_income_ratio",
+          "direction": "lower_is_better",
+          "thresholds": [
+            {"max": 3.0, "score": 2},
+            {"min": 3.0, "max": 4.0, "score": 1},
+            {"min": 4.0, "max": 5.0, "score": 0},
+            {"min": 5.0, "max": 7.0, "score": -1},
+            {"min": 7.0, "score": -2}
           ]
         }
       }
@@ -90,30 +101,7 @@
       "label": "Fiscal Health",
       "weight": 1,
       "requires_manual": true,
-      "indicators": {
-        "poverty_rate_proxy": {
-          "source_field": "poverty_rate",
-          "direction": "lower_is_better",
-          "thresholds": [
-            {"max": 10, "score": 2},
-            {"min": 10, "max": 14, "score": 1},
-            {"min": 14, "max": 18, "score": 0},
-            {"min": 18, "max": 25, "score": -1},
-            {"min": 25, "score": -2}
-          ]
-        },
-        "unemployment_proxy": {
-          "source_field": "unemployment_rate",
-          "direction": "lower_is_better",
-          "thresholds": [
-            {"max": 3.5, "score": 2},
-            {"min": 3.5, "max": 5, "score": 1},
-            {"min": 5, "max": 6.5, "score": 0},
-            {"min": 6.5, "max": 8.5, "score": -1},
-            {"min": 8.5, "score": -2}
-          ]
-        }
-      }
+      "indicators": {}
     },
     "infrastructure": {
       "label": "Infrastructure & Capital Investment",
@@ -265,26 +253,16 @@
             {"max": 30, "score": -2}
           ]
         },
-        "poverty_rate": {
-          "source_field": "poverty_rate",
-          "direction": "lower_is_better",
+        "cost_of_living_proxy": {
+          "source_field": "median_sale_price",
+          "type": "ratio",
+          "national_benchmark": 332700,
           "thresholds": [
-            {"max": 10, "score": 2},
-            {"min": 10, "max": 13, "score": 1},
-            {"min": 13, "max": 16, "score": 0},
-            {"min": 16, "max": 22, "score": -1},
-            {"min": 22, "score": -2}
-          ]
-        },
-        "unemployment_rate": {
-          "source_field": "unemployment_rate",
-          "direction": "lower_is_better",
-          "thresholds": [
-            {"max": 3.5, "score": 2},
-            {"min": 3.5, "max": 4.5, "score": 1},
-            {"min": 4.5, "max": 6, "score": 0},
-            {"min": 6, "max": 8, "score": -1},
-            {"min": 8, "score": -2}
+            {"max_ratio": 0.60, "score": 2},
+            {"min_ratio": 0.60, "max_ratio": 0.85, "score": 1},
+            {"min_ratio": 0.85, "max_ratio": 1.15, "score": 0},
+            {"min_ratio": 1.15, "max_ratio": 1.50, "score": -1},
+            {"min_ratio": 1.50, "score": -2}
           ]
         }
       }

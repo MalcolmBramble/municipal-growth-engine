@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+from datetime import datetime, timezone
 
 import requests
 
@@ -192,15 +193,17 @@ class CensusACSClient:
         session,
         resolver_result: dict,
         groups: list[str] | None = None,
+        max_age_days: int = 90,
     ) -> dict[str, float | None]:
         """Fetch ACS data and persist to the database.
 
-        Checks the DB cache first; only calls the API if data is missing.
+        Checks the DB cache first; only calls the API if data is missing or stale.
 
         Args:
             session: SQLAlchemy session
             resolver_result: dict from FIPSResolver.resolve()
             groups: list of variable group names, or None for all
+            max_age_days: maximum cache age in days before re-fetching
 
         Returns:
             dict mapping variable code to value
@@ -214,8 +217,12 @@ class CensusACSClient:
         missing = [v for v in variables if v not in existing_codes]
 
         if not missing:
-            logger.info("All %d variables cached for city_id=%d year=%d", len(variables), city.id, self.year)
-            return {r.variable_code: r.value for r in existing if r.variable_code in variables}
+            newest = max(existing, key=lambda r: r.fetched_at)
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - newest.fetched_at).days
+            if age <= max_age_days:
+                logger.info("All %d variables cached for city_id=%d year=%d (age: %dd)", len(variables), city.id, self.year, age)
+                return {r.variable_code: r.value for r in existing if r.variable_code in variables}
+            logger.info("Cache stale (%d days) for city_id=%d year=%d, re-fetching", age, city.id, self.year)
 
         # Fetch from API (fetch all requested, not just missing, since it's a single call)
         raw = self.fetch(resolver_result["state_fips"], resolver_result["place_fips"], groups)
@@ -293,3 +300,20 @@ class CensusACSClient:
             derived["pct_hispanic"] = None
 
         return derived
+
+    @staticmethod
+    def compute_population_growth(
+        current_pop: float | None,
+        prior_pop: float | None,
+        years: int = 5,
+    ) -> float | None:
+        """Compute annualized population growth rate.
+
+        Formula: ((current / prior) ^ (1/years) - 1) * 100
+
+        Returns:
+            Annualized growth rate as a percentage, or None if inputs invalid.
+        """
+        if not current_pop or not prior_pop or prior_pop <= 0 or years <= 0:
+            return None
+        return round(((current_pop / prior_pop) ** (1 / years) - 1) * 100, 2)

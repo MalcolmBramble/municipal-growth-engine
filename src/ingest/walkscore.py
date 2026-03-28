@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import datetime, timezone
 
 import requests
 
@@ -118,22 +119,26 @@ class WalkScoreClient:
         self,
         session,
         resolver_result: dict,
+        max_age_days: int = 90,
     ) -> dict[str, int | None]:
         """Fetch Walk Score data and persist to database.
 
-        Checks cache first.
+        Checks cache first; re-fetches if data is stale.
         """
         city = upsert_city(session, resolver_result)
 
         # Check cache
         existing = get_walkscore_data(session, city.id)
         if existing:
-            logger.info("Walk Score data cached for city_id=%d", city.id)
-            return {
-                "walk_score": existing.walk_score,
-                "transit_score": existing.transit_score,
-                "bike_score": existing.bike_score,
-            }
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - existing.fetched_at).days
+            if age <= max_age_days:
+                logger.info("Walk Score data cached for city_id=%d (age: %dd)", city.id, age)
+                return {
+                    "walk_score": existing.walk_score,
+                    "transit_score": existing.transit_score,
+                    "bike_score": existing.bike_score,
+                }
+            logger.info("Walk Score cache stale (%d days), re-fetching", age)
 
         # Fetch from API
         result = self.fetch(resolver_result["city_name"], resolver_result["state_abbr"])

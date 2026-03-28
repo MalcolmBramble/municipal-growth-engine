@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -121,30 +122,34 @@ class FEMANRIClient:
         self,
         session,
         resolver_result: dict,
+        max_age_days: int = 90,
     ) -> dict:
         """Parse FEMA NRI data and persist to database.
 
-        Checks cache first.
+        Checks cache first; re-parses if data is stale.
         """
         city = upsert_city(session, resolver_result)
 
         # Check cache
         existing = get_climate_risk_data(session, city.id)
         if existing:
-            logger.info("FEMA NRI data cached for city_id=%d", city.id)
-            return {
-                "risk_rating": existing.risk_rating,
-                "risk_score": existing.risk_score,
-                "hazard_scores": {
-                    "earthquake": existing.earthquake_risk,
-                    "tornado": existing.tornado_risk,
-                    "hurricane": existing.hurricane_risk,
-                    "wildfire": existing.wildfire_risk,
-                    "flood": existing.flood_risk,
-                    "heat_wave": existing.heat_wave_risk,
-                    "cold_wave": existing.cold_wave_risk,
-                },
-            }
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - existing.fetched_at).days
+            if age <= max_age_days:
+                logger.info("FEMA NRI data cached for city_id=%d (age: %dd)", city.id, age)
+                return {
+                    "risk_rating": existing.risk_rating,
+                    "risk_score": existing.risk_score,
+                    "hazard_scores": {
+                        "earthquake": existing.earthquake_risk,
+                        "tornado": existing.tornado_risk,
+                        "hurricane": existing.hurricane_risk,
+                        "wildfire": existing.wildfire_risk,
+                        "flood": existing.flood_risk,
+                        "heat_wave": existing.heat_wave_risk,
+                        "cold_wave": existing.cold_wave_risk,
+                    },
+                }
+            logger.info("FEMA NRI cache stale (%d days), re-parsing", age)
 
         # Parse CSV
         result = self.parse(resolver_result["city_name"], resolver_result["state_abbr"])

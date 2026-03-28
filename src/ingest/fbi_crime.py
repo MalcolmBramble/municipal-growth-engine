@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import datetime, timezone
 
 import requests
 
@@ -149,16 +150,22 @@ class FBICrimeClient:
 
         return result
 
-    def fetch_and_store(self, session, resolver_result: dict) -> dict:
+    def fetch_and_store(self, session, resolver_result: dict, max_age_days: int = 90) -> dict:
         """Fetch FBI crime data and persist to database.
 
-        Checks cache first.
+        Checks cache first; re-fetches if data is stale.
         """
         city = upsert_city(session, resolver_result)
         state_abbr = resolver_result["state_abbr"]
 
         # Check cache
         existing = get_crime_data(session, city.id)
+        if existing:
+            newest = max(existing, key=lambda r: r.fetched_at)
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - newest.fetched_at).days
+            if age > max_age_days:
+                logger.info("Crime cache stale (%d days), re-fetching", age)
+                existing = None
         if existing:
             logger.info("Crime data cached for city_id=%d", city.id)
             records = sorted(existing, key=lambda r: r.year, reverse=True)

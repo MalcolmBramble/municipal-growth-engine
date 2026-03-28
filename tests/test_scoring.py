@@ -146,14 +146,13 @@ class TestColumbus:
         profile = _make_columbus()
         engine = ScoringEngine()
         result = engine.score(profile, manual_scores={
-            "public_safety": 1,
             "fiscal_health": 1,
         })
 
         _print_breakdown("COLUMBUS, OH", result)
 
-        assert 3 <= result.composite_score <= 9, (
-            f"Columbus composite {result.composite_score} outside expected range 3-9"
+        assert 1 <= result.composite_score <= 7, (
+            f"Columbus composite {result.composite_score} outside expected range 1-7"
         )
         assert result.band in ("Stable", "Growing")
 
@@ -169,14 +168,13 @@ class TestDetroit:
         profile = _make_detroit()
         engine = ScoringEngine()
         result = engine.score(profile, manual_scores={
-            "public_safety": -2,
             "fiscal_health": -2,
         })
 
         _print_breakdown("DETROIT, MI", result)
 
-        assert -14 <= result.composite_score <= -6, (
-            f"Detroit composite {result.composite_score} outside expected range -14 to -6"
+        assert -11 <= result.composite_score <= -5, (
+            f"Detroit composite {result.composite_score} outside expected range -11 to -5"
         )
         assert result.band in ("Severe Decline", "Declining")
 
@@ -202,6 +200,7 @@ def _make_columbus() -> CityDataProfile:
         state_fips="39",
         place_fips="18000",
         population=946000,
+        population_growth_rate=0.8,
         median_income=66082,
         poverty_rate=18.13,
         bachelors_plus_pct=38.2,
@@ -211,8 +210,11 @@ def _make_columbus() -> CityDataProfile:
         transit_score=27,
         median_sale_price=300000,
         price_yoy_change=5.2,
+        price_to_income_ratio=4.54,
         zhvi=270000,
         zhvi_yoy_change=6.1,
+        violent_crime_rate=350.0,
+        homicide_trend_pct=-8.5,
         risk_rating="Relatively Low",
         risk_score=8.5,
         hazard_scores={
@@ -231,6 +233,7 @@ def _make_detroit() -> CityDataProfile:
         state_fips="26",
         place_fips="22000",
         population=633218,
+        population_growth_rate=-0.7,
         median_income=39209,
         poverty_rate=34.5,
         bachelors_plus_pct=16.8,
@@ -240,8 +243,11 @@ def _make_detroit() -> CityDataProfile:
         transit_score=42,
         median_sale_price=85000,
         price_yoy_change=-2.1,
+        price_to_income_ratio=2.17,
         zhvi=72000,
         zhvi_yoy_change=-1.5,
+        violent_crime_rate=1900.0,
+        homicide_trend_pct=5.2,
         risk_rating="Relatively Moderate",
         risk_score=14.0,
         hazard_scores={

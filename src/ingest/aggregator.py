@@ -26,6 +26,7 @@ class CityDataProfile:
 
     # Census
     population: float | None = None
+    population_growth_rate: float | None = None
     median_income: float | None = None
     poverty_rate: float | None = None
     bachelors_plus_pct: float | None = None
@@ -38,6 +39,7 @@ class CityDataProfile:
     # Housing
     median_sale_price: float | None = None
     price_yoy_change: float | None = None
+    price_to_income_ratio: float | None = None
     median_dom: float | None = None
     months_of_supply: float | None = None
     zhvi: float | None = None
@@ -122,6 +124,12 @@ class CityDataAggregator:
         # FBI Crime
         self._fetch_crime(profile, resolved)
 
+        # Derived cross-source metrics
+        if profile.median_sale_price and profile.median_income and profile.median_income > 0:
+            profile.price_to_income_ratio = round(
+                profile.median_sale_price / profile.median_income, 2
+            )
+
         return profile
 
     def _fetch_census(self, profile: CityDataProfile, resolved: dict) -> None:
@@ -138,6 +146,24 @@ class CityDataAggregator:
                 k: v for k, v in derived.items()
                 if k.startswith("pct_") and v is not None
             }
+
+            # Fetch prior-year population for growth rate
+            prior_year = self.census_client.year - 5
+            prior_client = CensusACSClient(
+                api_key=self.census_client.api_key,
+                year=prior_year,
+                estimate_type="acs5",
+            )
+            try:
+                prior_raw = prior_client.fetch_and_store(
+                    self._session, resolved, groups=["population"],
+                )
+                prior_pop = prior_raw.get("B01003_001E")
+                profile.population_growth_rate = CensusACSClient.compute_population_growth(
+                    profile.population, prior_pop, years=5,
+                )
+            except Exception as e:
+                logger.warning("Prior-year population fetch failed: %s", e)
         except Exception as e:
             logger.error("Census data fetch failed: %s", e)
 

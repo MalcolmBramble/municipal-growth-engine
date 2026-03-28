@@ -141,16 +141,23 @@ class BLSClient:
         self,
         session,
         resolver_result: dict,
+        max_age_days: int = 90,
     ) -> dict:
         """Fetch BLS unemployment data and persist to database.
 
-        Checks cache first; only calls API if data is missing.
+        Checks cache first; only calls API if data is missing or stale.
         """
         city = upsert_city(session, resolver_result)
         series_id = state_unemployment_series(resolver_result["state_fips"])
 
         # Check cache
         existing = get_bls_data(session, city.id, series_id)
+        if existing:
+            newest = max(existing, key=lambda r: r.fetched_at)
+            age = (datetime.now(timezone.utc).replace(tzinfo=None) - newest.fetched_at).days
+            if age > max_age_days:
+                logger.info("BLS cache stale (%d days), re-fetching", age)
+                existing = None
         if existing:
             logger.info("BLS data cached for city_id=%d series=%s", city.id, series_id)
             # Reconstruct result from cached data

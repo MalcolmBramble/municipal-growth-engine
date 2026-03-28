@@ -76,6 +76,7 @@ class TestFetchMocked:
 class TestIntegration:
     """Integration tests that hit the real Census API."""
 
+    @pytest.mark.integration
     def test_columbus_oh_end_to_end(self, db_session):
         """Full pipeline: resolve → fetch → store → verify."""
         from src.resolver import FIPSResolver
